@@ -31,13 +31,17 @@
 </div>
 
 <script>
-const role = localStorage.getItem("role");
-const API = "http://localhost:3000";
 
+// ✅ FIX 1: USE LIVE BACKEND
+const API = "https://smart-campus-74c7.onrender.com";
+
+const role = localStorage.getItem("role") || "student";
+
+// SET TITLE
 document.getElementById("title").innerText =
     role.toUpperCase() + " DASHBOARD";
 
-// LOAD
+// LOAD PAGE
 function loadContent() {
     if (role === "student") studentView();
     if (role === "admin") adminView();
@@ -93,9 +97,15 @@ function submitIssue() {
             location: document.getElementById("loc").value,
             category: document.getElementById("cat").value
         })
-    }).then(() => {
+    })
+    .then(res => res.json())
+    .then(() => {
         alert("Issue Submitted");
         loadContent();
+    })
+    .catch(err => {
+        console.error(err);
+        alert("Backend error");
     });
 }
 
@@ -116,17 +126,22 @@ function loadStudentIssues() {
             </tr>
         `).join("");
 
-        document.getElementById("studentIssues").innerHTML = `
-            <table>
-                <tr>
-                    <th>Student</th>
-                    <th>Issue</th>
-                    <th>Status</th>
-                </tr>
-                ${rows}
-            </table>
-        `;
-    });
+        // ✅ FIX 2: SAFE CHECK
+        const container = document.getElementById("studentIssues");
+        if (container) {
+            container.innerHTML = `
+                <table>
+                    <tr>
+                        <th>Student</th>
+                        <th>Issue</th>
+                        <th>Status</th>
+                    </tr>
+                    ${rows}
+                </table>
+            `;
+        }
+    })
+    .catch(err => console.error(err));
 }
 
 // ================= ADMIN =================
@@ -170,7 +185,8 @@ function adminView() {
                 ${rows}
             </table>
         `;
-    });
+    })
+    .catch(err => console.error(err));
 }
 
 // ================= STAFF =================
@@ -207,7 +223,8 @@ function staffView() {
                 ${rows}
             </table>
         `;
-    });
+    })
+    .catch(err => console.error(err));
 }
 
 // ================= UPDATE =================
@@ -224,8 +241,9 @@ function update(id, status) {
 
 function logout() {
     localStorage.clear();
-    window.location.href = "login.html";
+    window.location.href = "index.html";
 }
+
 </script>
 
 </body>
