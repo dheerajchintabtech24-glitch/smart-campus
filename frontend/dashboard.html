@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Dashboard</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<!-- HEADER -->
+<div class="header">
+    <h2>Smart Campus Portal</h2>
+    <div class="logout-btn" onclick="logout()">Logout</div>
+</div>
+
+<div class="dashboard">
+
+    <div class="sidebar">
+        <h3>Smart Campus</h3>
+    </div>
+
+    <div class="main">
+
+        <div class="card">
+            <h2 id="title"></h2>
+        </div>
+
+        <div class="card" id="content"></div>
+
+    </div>
+
+</div>
+
+<script>
+const role = localStorage.getItem("role");
+const API = "http://localhost:3000";
+
+document.getElementById("title").innerText =
+    role.toUpperCase() + " DASHBOARD";
+
+// LOAD
+function loadContent() {
+    if (role === "student") studentView();
+    if (role === "admin") adminView();
+    if (role === "staff") staffView();
+}
+
+loadContent();
+
+// ================= STUDENT =================
+
+function studentView() {
+    document.getElementById("content").innerHTML = `
+        <div class="form-box">
+            <h3>Report Issue</h3>
+
+            <input id="name" placeholder="Your Name">
+            <input id="desc" placeholder="Issue Description">
+            <input id="loc" placeholder="Location">
+
+            <select id="cat">
+                <option>Cleaning</option>
+                <option>Electrical</option>
+                <option>Plumbing</option>
+                <option>Other</option>
+            </select>
+
+            <button onclick="submitIssue()">Submit Issue</button>
+        </div>
+
+        <br>
+
+        <h3>Your Issues</h3>
+        <div id="studentIssues"></div>
+    `;
+
+    loadStudentIssues();
+}
+
+function submitIssue() {
+    const studentName = document.getElementById("name").value;
+
+    if (!studentName) {
+        alert("Enter your name");
+        return;
+    }
+
+    fetch(API + "/issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+            student: studentName,
+            description: document.getElementById("desc").value,
+            location: document.getElementById("loc").value,
+            category: document.getElementById("cat").value
+        })
+    }).then(() => {
+        alert("Issue Submitted");
+        loadContent();
+    });
+}
+
+function loadStudentIssues() {
+    fetch(API + "/issues")
+    .then(res => res.json())
+    .then(data => {
+
+        let rows = data.map(i => `
+            <tr>
+                <td>${i.student}</td>
+                <td>${i.description}</td>
+                <td>
+                    <span class="status ${i.status.toLowerCase()}">
+                        ${i.status}
+                    </span>
+                </td>
+            </tr>
+        `).join("");
+
+        document.getElementById("studentIssues").innerHTML = `
+            <table>
+                <tr>
+                    <th>Student</th>
+                    <th>Issue</th>
+                    <th>Status</th>
+                </tr>
+                ${rows}
+            </table>
+        `;
+    });
+}
+
+// ================= ADMIN =================
+
+function adminView() {
+    fetch(API + "/issues")
+    .then(res => res.json())
+    .then(data => {
+
+        let rows = data.map(i => `
+            <tr>
+                <td>${i.student}</td>
+                <td>${i.description}</td>
+                <td>${i.category}</td>
+                <td>
+                    <span class="status ${i.status.toLowerCase()}">${i.status}</span>
+                </td>
+                <td>
+                    ${
+                        i.status === "PENDING"
+                        ? `
+                        <button onclick="update(${i.id}, 'ASSIGNED')">Approve</button>
+                        <button onclick="update(${i.id}, 'DENIED')">Deny</button>
+                        `
+                        : "—"
+                    }
+                </td>
+            </tr>
+        `).join("");
+
+        document.getElementById("content").innerHTML = `
+            <h3>All Issues</h3>
+            <table>
+                <tr>
+                    <th>Student</th>
+                    <th>Issue</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                ${rows}
+            </table>
+        `;
+    });
+}
+
+// ================= STAFF =================
+
+function staffView() {
+    fetch(API + "/issues")
+    .then(res => res.json())
+    .then(data => {
+
+        let assigned = data.filter(i => i.status === "ASSIGNED");
+
+        let rows = assigned.map(i => `
+            <tr>
+                <td>${i.description}</td>
+                <td>${i.location || "N/A"}</td>
+                <td>${i.category}</td>
+                <td><span class="status assigned">ASSIGNED</span></td>
+                <td>
+                    <button onclick="update(${i.id}, 'FIXED')">Mark Fixed</button>
+                </td>
+            </tr>
+        `).join("");
+
+        document.getElementById("content").innerHTML = `
+            <h3>Assigned Issues</h3>
+            <table>
+                <tr>
+                    <th>Issue</th>
+                    <th>Location</th>
+                    <th>Category</th>
+                    <th>Status</th>
+                    <th>Action</th>
+                </tr>
+                ${rows}
+            </table>
+        `;
+    });
+}
+
+// ================= UPDATE =================
+
+function update(id, status) {
+    fetch(API + "/issues/" + id, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status })
+    }).then(() => loadContent());
+}
+
+// ================= LOGOUT =================
+
+function logout() {
+    localStorage.clear();
+    window.location.href = "login.html";
+}
+</script>
+
+</body>
+</html>
