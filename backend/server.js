@@ -1,74 +1,62 @@
-// ==============================
-// SMART CAMPUS BACKEND SERVER
-// ==============================
-
+// ================== IMPORTS ==================
 const express = require("express");
 const cors = require("cors");
 
+// ================== APP SETUP ==================
 const app = express();
-
-// Middleware
 app.use(cors());
 app.use(express.json());
 
-// ==============================
-// IN-MEMORY DATABASE (for now)
-// ==============================
-
+// ================== DATA STORAGE ==================
 let issues = [];
 
-// ==============================
-// ROUTES
-// ==============================
-
-// 🔹 Create Issue (Student)
-app.post("/issues", (req, res) => {
-    const issue = {
-        id: Date.now(),
-        student: req.body.student,
-        description: req.body.description,
-        location: req.body.location,
-        category: req.body.category || "General",
-        priority: "Low",
-        status: "PENDING"
-    };
-
-    issues.push(issue);
-
-    res.json(issue);
+// ================== ROOT ROUTE ==================
+app.get("/", (req, res) => {
+  res.send("Smart Campus Backend Running 🚀");
 });
 
-// 🔹 Get All Issues (Admin / Staff)
+// ================== GET ALL ISSUES ==================
 app.get("/issues", (req, res) => {
-    res.json(issues);
+  res.json(issues);
 });
 
-// 🔹 Update Issue (Admin / Staff)
+// ================== ADD NEW ISSUE ==================
+app.post("/issues", (req, res) => {
+  const { student, description, location, category } = req.body;
+
+  const newIssue = {
+    id: Date.now(),
+    student: student || "Anonymous",
+    description,
+    location,
+    category,
+    status: "PENDING"
+  };
+
+  issues.push(newIssue);
+  res.json(newIssue);
+});
+
+// ================== UPDATE ISSUE (ADMIN / STAFF) ==================
 app.put("/issues/:id", (req, res) => {
-    const id = parseInt(req.params.id);
+  const id = Number(req.params.id);
+  const { status } = req.body;
 
-    issues = issues.map(issue => {
-        if (issue.id === id) {
-            return {
-                ...issue,
-                ...req.body
-            };
-        }
-        return issue;
-    });
+  issues = issues.map(issue =>
+    issue.id === id ? { ...issue, status } : issue
+  );
 
-    res.json({ message: "Issue updated successfully" });
+  res.json({ message: "Issue updated successfully" });
 });
 
-// ==============================
-// SERVER START
-// ==============================
-
-app.listen(3000, () => {
-    console.log("🚀 Server running on http://localhost:3000");
+// ================== DELETE ALL ISSUES (OPTIONAL RESET) ==================
+app.delete("/issues", (req, res) => {
+  issues = [];
+  res.json({ message: "All issues cleared" });
 });
 
-app.delete('/clear', (req, res) => {
-    issues = [];
-    res.send("All issues cleared");
+// ================== START SERVER ==================
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
 });
