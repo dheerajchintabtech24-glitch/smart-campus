@@ -11,6 +11,12 @@ Smart Campus Portal helps different campus users work together in one system:
 - **Students** can submit maintenance issues and track their status.
 - **Admins** can review reported issues and approve or deny them.
 - **Staff** can view assigned tasks and mark issues as fixed once resolved.
+Email Credential to be Used:
+student@gmail.com
+
+admin@gmail.com
+
+staff@gmail.com
 
 This creates a cleaner workflow for handling campus problems like broken equipment, infrastructure complaints, or maintenance requests.
 
